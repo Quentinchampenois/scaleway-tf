@@ -18,16 +18,16 @@ variable "availability_zone_names" {
 	default = "nl-am-1"
 }
 
-variable "security_group_uuid" {
-	type    = string
-	description = "The id of the security group (UUID)"
-	sensitive = true
-
-	validation {
-		condition = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.security_group_uuid))
-		error_message = "must be a valid uuid"
-	}
-}
+#variable "security_group_uuid" {
+#	type    = string
+#	description = "The id of the security group (UUID)"
+#	sensitive = true
+#
+#	validation {
+#		condition = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.security_group_uuid))
+#		error_message = "must be a valid uuid"
+#	}
+#}
 
 variable "os" {
 	type = string
@@ -56,21 +56,46 @@ provider "scaleway" {
 }
 
 resource "scaleway_instance_ip" "public_ip" {}
-resource "scaleway_instance_volume" "data" {
-	size_in_gb = 30
-	type = "l_ssd"
-	name = "staging-ssd"
-}
+#resource "scaleway_instance_volume" "data" {
+#	size_in_gb = 30
+#	type = "l_ssd"
+#}
 
-resource "scaleway_instance_security_group_rules" "main" {
-	security_group_id = var.security_group_uuid
-}
+#resource "scaleway_instance_security_group_rules" "main" {
+	#security_group_id = var.security_group_uuid
+#}
 
-resource "scaleway_instance_server" "staging" {
+resource "scaleway_instance_server" "main" {
 	type = var.vm_type
 	image = var.os
-	enable_ipv6 = var.ipv6
 	name = var.name
+	ip_id = "${scaleway_instance_ip.public_ip.id}"
+	#state = "running"
+
+	root_volume {
+		size_in_gb = 30
+		delete_on_termination = false
+	}
 
 	tags = ["tf", "staging"]
+}
+
+output "id" {
+	value = scaleway_instance_server.main.id
+}
+
+output "ip" {
+	value = scaleway_instance_server.main.public_ip
+}
+
+output "name" {
+	value = scaleway_instance_server.main.name
+}
+
+output "state" {
+	value = scaleway_instance_server.main.state
+}
+
+output "type" {
+	value = scaleway_instance_server.main.type
 }
